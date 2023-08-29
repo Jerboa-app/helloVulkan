@@ -6,6 +6,8 @@
 
 #include <Renderer/vulkan.h>
 
+#include <memory>
+
 class HelloTriangleApplication 
 {
 public:
@@ -23,7 +25,7 @@ private:
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
 
-    Renderer::VulkanRenderer * renderer;
+    std::unique_ptr<Renderer::VulkanRenderer> renderer;
 
     void initWindow()
     {
@@ -37,7 +39,7 @@ private:
 
     void initVulkan() 
     {
-        renderer = new Renderer::VulkanRenderer;
+        renderer = std::move(std::make_unique<Renderer::VulkanRenderer>());
     }
 
     void mainLoop() 
@@ -52,7 +54,6 @@ private:
     {
         glfwDestroyWindow(window);
         glfwTerminate();
-        free(renderer);
     }
 };
 

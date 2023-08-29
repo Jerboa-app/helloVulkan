@@ -20,10 +20,14 @@ namespace Renderer
         createInfo.pApplicationInfo = &appInfo;
         createInfo.pNext = nullptr;
 
+        VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+
         if (enableValidationLayers)
         {
             createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
             createInfo.ppEnabledLayerNames = validationLayers.data();
+            populateDebugMessengerCreateInfo(debugCreateInfo);
+            createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *) &debugCreateInfo;
         }
         else
         {
@@ -50,7 +54,6 @@ namespace Renderer
 
     VulkanRenderer::~VulkanRenderer()
     {
-
         if (enableValidationLayers)
         {
             destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
@@ -119,18 +122,24 @@ namespace Renderer
         }
     }
 
-    void VulkanRenderer::setupDebugMessenger()
-    {
-        if (!enableValidationLayers) { return; }
-
-        VkDebugUtilsMessengerCreateInfoEXT createInfo;
+    void VulkanRenderer::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT & createInfo) {
+        createInfo = {};
         createInfo.sType =              VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
         createInfo.messageSeverity =    VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
         createInfo.messageType =        VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
         createInfo.pfnUserCallback =    debugCallback;
         createInfo.pUserData =          nullptr; // Optional
-        createInfo.pNext = nullptr;
-        createInfo.flags = 0;
+        createInfo.pNext =              nullptr;
+        createInfo.flags =              0;
+    }
+
+    void VulkanRenderer::setupDebugMessenger()
+    {
+        if (!enableValidationLayers) { return; }
+
+        VkDebugUtilsMessengerCreateInfoEXT createInfo;
+
+        populateDebugMessengerCreateInfo(createInfo);
 
         if (createDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS)
         {

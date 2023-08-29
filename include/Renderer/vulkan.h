@@ -113,6 +113,8 @@ namespace Renderer
                     func(instance, debugMessenger, pAllocator);
                 }
             }
+
+            void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT & createInfo);
     };
 
 }
