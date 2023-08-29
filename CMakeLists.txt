@@ -37,6 +37,7 @@ include_directories(src)
 
 file(GLOB SRC 
     "src/*.cpp"
+    "src/Renderer/*.cpp"
 )
 
 if (WINDOWS)

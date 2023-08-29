@@ -1,4 +1,6 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/HelloVK.dir/src/Renderer/vulkan.cpp.o"
+  "CMakeFiles/HelloVK.dir/src/Renderer/vulkan.cpp.o.d"
   "CMakeFiles/HelloVK.dir/src/main.cpp.o"
   "CMakeFiles/HelloVK.dir/src/main.cpp.o.d"
   "HelloVK"

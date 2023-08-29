@@ -148,12 +148,12 @@ include/vendored/glm/glm/clean:
 CMakeFiles/HelloVK.dir/all: include/vendored/glfw/src/CMakeFiles/glfw.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/HelloVK.dir/build.make CMakeFiles/HelloVK.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/HelloVK.dir/build.make CMakeFiles/HelloVK.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles --progress-num=1,2 "Built target HelloVK"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles --progress-num=1,2,3 "Built target HelloVK"
 .PHONY : CMakeFiles/HelloVK.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/HelloVK.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles 19
+	$(CMAKE_COMMAND) -E cmake_progress_start /media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles 20
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/HelloVK.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles 0
 .PHONY : CMakeFiles/HelloVK.dir/rule
@@ -200,7 +200,7 @@ include/vendored/glm/CMakeFiles/uninstall.dir/clean:
 include/vendored/glfw/src/CMakeFiles/update_mappings.dir/all:
 	$(MAKE) $(MAKESILENT) -f include/vendored/glfw/src/CMakeFiles/update_mappings.dir/build.make include/vendored/glfw/src/CMakeFiles/update_mappings.dir/depend
 	$(MAKE) $(MAKESILENT) -f include/vendored/glfw/src/CMakeFiles/update_mappings.dir/build.make include/vendored/glfw/src/CMakeFiles/update_mappings.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles --progress-num=20 "Built target update_mappings"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles --progress-num=21 "Built target update_mappings"
 .PHONY : include/vendored/glfw/src/CMakeFiles/update_mappings.dir/all
 
 # Build rule for subdir invocation for target.
@@ -226,7 +226,7 @@ include/vendored/glfw/src/CMakeFiles/update_mappings.dir/clean:
 include/vendored/glfw/src/CMakeFiles/glfw.dir/all:
 	$(MAKE) $(MAKESILENT) -f include/vendored/glfw/src/CMakeFiles/glfw.dir/build.make include/vendored/glfw/src/CMakeFiles/glfw.dir/depend
 	$(MAKE) $(MAKESILENT) -f include/vendored/glfw/src/CMakeFiles/glfw.dir/build.make include/vendored/glfw/src/CMakeFiles/glfw.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles --progress-num=3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19 "Built target glfw"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles --progress-num=4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20 "Built target glfw"
 .PHONY : include/vendored/glfw/src/CMakeFiles/glfw.dir/all
 
 # Build rule for subdir invocation for target.

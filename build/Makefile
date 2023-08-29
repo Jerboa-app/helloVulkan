@@ -213,6 +213,30 @@ glfw/fast:
 	$(MAKE) $(MAKESILENT) -f include/vendored/glfw/src/CMakeFiles/glfw.dir/build.make include/vendored/glfw/src/CMakeFiles/glfw.dir/build
 .PHONY : glfw/fast
 
+src/Renderer/vulkan.o: src/Renderer/vulkan.cpp.o
+.PHONY : src/Renderer/vulkan.o
+
+# target to build an object file
+src/Renderer/vulkan.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/HelloVK.dir/build.make CMakeFiles/HelloVK.dir/src/Renderer/vulkan.cpp.o
+.PHONY : src/Renderer/vulkan.cpp.o
+
+src/Renderer/vulkan.i: src/Renderer/vulkan.cpp.i
+.PHONY : src/Renderer/vulkan.i
+
+# target to preprocess a source file
+src/Renderer/vulkan.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/HelloVK.dir/build.make CMakeFiles/HelloVK.dir/src/Renderer/vulkan.cpp.i
+.PHONY : src/Renderer/vulkan.cpp.i
+
+src/Renderer/vulkan.s: src/Renderer/vulkan.cpp.s
+.PHONY : src/Renderer/vulkan.s
+
+# target to generate assembly for a file
+src/Renderer/vulkan.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/HelloVK.dir/build.make CMakeFiles/HelloVK.dir/src/Renderer/vulkan.cpp.s
+.PHONY : src/Renderer/vulkan.cpp.s
+
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
@@ -253,6 +277,9 @@ help:
 	@echo "... update_mappings"
 	@echo "... HelloVK"
 	@echo "... glfw"
+	@echo "... src/Renderer/vulkan.o"
+	@echo "... src/Renderer/vulkan.i"
+	@echo "... src/Renderer/vulkan.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
