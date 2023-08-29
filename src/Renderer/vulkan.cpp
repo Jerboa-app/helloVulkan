@@ -18,6 +18,16 @@ namespace Renderer
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &appInfo;
 
+        if (enableValidationLayers)
+        {
+            createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+            createInfo.ppEnabledLayerNames = validationLayers.data();
+        }
+        else
+        {
+            createInfo.enabledLayerCount = 0;
+        }
+
         // glfw 
         uint32_t glfwExtensionCount = 0;
         const char ** glfwExtensions;
@@ -27,16 +37,14 @@ namespace Renderer
         createInfo.enabledExtensionCount = glfwExtensionCount;
         createInfo.ppEnabledExtensionNames = glfwExtensions;
 
-        createInfo.enabledLayerCount = 0;
-
         if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create instance!");
         }
 
-        if (enableValidationLayers)
+        if (enableValidationLayers && !checkValidationLayerSupport())
         {
-            checkValidationLayerSupport();
+            throw std::runtime_error("Validation layers are not supported");
         }
     }
 
@@ -47,16 +55,15 @@ namespace Renderer
 
     bool VulkanRenderer::checkValidationLayerSupport()
     {
-        
         supportedValidationLayers();
 
-        for (std::string layerName : validationLayers)
+        for (const char * layerName : validationLayers)
         {
             bool layerFound = false;
 
             for (const auto & layerProperties : availableLayers)
             {
-                if (layerName == std::string(layerProperties.layerName))
+                if (std::string(layerName) == std::string(layerProperties.layerName))
                 {
                     layerFound = true;
                     break;
@@ -72,7 +79,7 @@ namespace Renderer
         return true;
     }
 
-    void VulkanRenderer::supportedValidationLayers()
+    void VulkanRenderer::supportedValidationLayers(bool print)
     {
         uint32_t layerCount;
         // get all the validation layers allowed
@@ -80,6 +87,14 @@ namespace Renderer
 
         availableLayers = std::vector<VkLayerProperties>(layerCount);
         vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+        if (print)
+        {
+            for (const auto & layerProperties : availableLayers)
+            {
+                std::cout << layerProperties.layerName << "\n";
+            }
+        }
     }
 
 }

@@ -52,6 +52,10 @@ else()
     add_link_options(-no-pie)
 endif()
 
+if (VALIDATION)
+    add_compile_definitions(VALIDATION)
+endif()
+
 find_package(Vulkan REQUIRED)
 
 add_executable(HelloVK ${SRC})

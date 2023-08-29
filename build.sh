@@ -19,12 +19,17 @@ WINDOWS=1
 RELEASE=0
 TEST=0
 OSX=1
+VALIDATION=0
 
 while [[ $# -gt 0 ]]; do
   case $1 in
     -w|--windows)
       WINDOWS=0
       shift # past argument
+      ;;
+    -v|--validation)
+      VALIDATION=1
+      shift
       ;;
     -o|--osx)
       OSX=0
@@ -64,7 +69,7 @@ done
 if [[ $WINDOWS -eq 0 ]];
 then 
   cmake -E make_directory build
-  cmake -E chdir build cmake .. -D WINDOWS=ON -D RELEASE=$RELEASE -D TEST_SUITE=$TEST -D CMAKE_TOOLCHAIN_FILE=./windows.cmake && make -j 8 -C build
+  cmake -E chdir build cmake .. -D WINDOWS=ON -D RELEASE=$RELEASE -D VALIDATION=$VALIDATION -D TEST_SUITE=$TEST -D CMAKE_TOOLCHAIN_FILE=./windows.cmake && make -j 8 -C build
   # now copy dlls
   PREFIX="x86_64-w64-mingw32"
 
@@ -95,8 +100,8 @@ then
 elif [[ $OSX -eq 0 ]];
 then
   cmake -E make_directory build
-  cmake -E chdir build cmake .. -D OSX=ON -D RELEASE=$RELEASE -D TEST_SUITE=$TEST -D CMAKE_TOOLCHAIN_FILE=./osx.cmake && make -j 8 -C build
+  cmake -E chdir build cmake .. -D OSX=ON -D RELEASE=$RELEASE -D VALIDATION=$VALIDATION -D TEST_SUITE=$TEST -D CMAKE_TOOLCHAIN_FILE=./osx.cmake && make -j 8 -C build
 else
   cmake -E make_directory build
-  cmake -E chdir build cmake -D RELEASE=$RELEASE -D TEST_SUITE=$TEST .. && make -j 8 -C build
+  cmake -E chdir build cmake -D RELEASE=$RELEASE -D VALIDATION=$VALIDATION -D TEST_SUITE=$TEST .. && make -j 8 -C build
 fi

@@ -12,15 +12,15 @@
 
 #include <iostream>
 
-const std::vector<std::string> validationLayers = 
+const std::vector<const char *> validationLayers = 
 {
     "VK_LAYER_KHRONOS_validation"
 };
 
-#ifdef NDEBUG
-    const bool enableValidationLayers = false;
-#else
+#ifdef VALIDATION
     const bool enableValidationLayers = true;
+#else
+    const bool enableValidationLayers = false;
 #endif
 
 namespace Renderer
@@ -42,7 +42,7 @@ namespace Renderer
             std::vector<VkLayerProperties> availableLayers;
 
             bool checkValidationLayerSupport();
-            void supportedValidationLayers();
+            void supportedValidationLayers(bool print = false);
     };
 
 }
