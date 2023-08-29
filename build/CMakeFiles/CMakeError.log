@@ -1,25 +1,25 @@
 Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
-Change Dir: /media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles/CMakeScratch/TryCompile-9ec0Mz
+Change Dir: /media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles/CMakeScratch/TryCompile-lf2qYw
 
-Run Build Command(s):/usr/bin/make -f Makefile cmTC_72a9a/fast && /usr/bin/make  -f CMakeFiles/cmTC_72a9a.dir/build.make CMakeFiles/cmTC_72a9a.dir/build
-make[1]: Entering directory '/media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles/CMakeScratch/TryCompile-9ec0Mz'
-Building C object CMakeFiles/cmTC_72a9a.dir/src.c.o
-/usr/bin/cc -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_72a9a.dir/src.c.o -c /media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles/CMakeScratch/TryCompile-9ec0Mz/src.c
-Linking C executable cmTC_72a9a
-/opt/cmake-3.25.1-linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_72a9a.dir/link.txt --verbose=1
-/usr/bin/cc CMakeFiles/cmTC_72a9a.dir/src.c.o -o cmTC_72a9a 
-CMakeFiles/cmTC_72a9a.dir/src.c.o: In function `main':
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_359a6/fast && /usr/bin/make  -f CMakeFiles/cmTC_359a6.dir/build.make CMakeFiles/cmTC_359a6.dir/build
+make[1]: Entering directory '/media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles/CMakeScratch/TryCompile-lf2qYw'
+Building C object CMakeFiles/cmTC_359a6.dir/src.c.o
+/usr/bin/cc -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_359a6.dir/src.c.o -c /media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles/CMakeScratch/TryCompile-lf2qYw/src.c
+Linking C executable cmTC_359a6
+/opt/cmake-3.25.1-linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_359a6.dir/link.txt --verbose=1
+/usr/bin/cc CMakeFiles/cmTC_359a6.dir/src.c.o -o cmTC_359a6 
+CMakeFiles/cmTC_359a6.dir/src.c.o: In function `main':
 src.c:(.text+0x3e): undefined reference to `pthread_create'
 src.c:(.text+0x4a): undefined reference to `pthread_detach'
 src.c:(.text+0x56): undefined reference to `pthread_cancel'
 src.c:(.text+0x67): undefined reference to `pthread_join'
 src.c:(.text+0x7b): undefined reference to `pthread_atfork'
 collect2: error: ld returned 1 exit status
-CMakeFiles/cmTC_72a9a.dir/build.make:98: recipe for target 'cmTC_72a9a' failed
-make[1]: *** [cmTC_72a9a] Error 1
-make[1]: Leaving directory '/media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles/CMakeScratch/TryCompile-9ec0Mz'
-Makefile:127: recipe for target 'cmTC_72a9a/fast' failed
-make: *** [cmTC_72a9a/fast] Error 2
+CMakeFiles/cmTC_359a6.dir/build.make:98: recipe for target 'cmTC_359a6' failed
+make[1]: *** [cmTC_359a6] Error 1
+make[1]: Leaving directory '/media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles/CMakeScratch/TryCompile-lf2qYw'
+Makefile:127: recipe for target 'cmTC_359a6/fast' failed
+make: *** [cmTC_359a6/fast] Error 2
 
 
 Source file was:
@@ -45,22 +45,22 @@ int main(void)
 
 
 Determining if the function pthread_create exists in the pthreads failed with the following output:
-Change Dir: /media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles/CMakeScratch/TryCompile-88zn4f
+Change Dir: /media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles/CMakeScratch/TryCompile-g7rWH9
 
-Run Build Command(s):/usr/bin/make -f Makefile cmTC_ee2a9/fast && /usr/bin/make  -f CMakeFiles/cmTC_ee2a9.dir/build.make CMakeFiles/cmTC_ee2a9.dir/build
-make[1]: Entering directory '/media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles/CMakeScratch/TryCompile-88zn4f'
-Building C object CMakeFiles/cmTC_ee2a9.dir/CheckFunctionExists.c.o
-/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create -o CMakeFiles/cmTC_ee2a9.dir/CheckFunctionExists.c.o -c /media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles/CMakeScratch/TryCompile-88zn4f/CheckFunctionExists.c
-Linking C executable cmTC_ee2a9
-/opt/cmake-3.25.1-linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ee2a9.dir/link.txt --verbose=1
-/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=pthread_create CMakeFiles/cmTC_ee2a9.dir/CheckFunctionExists.c.o -o cmTC_ee2a9  -lpthreads 
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_d18fa/fast && /usr/bin/make  -f CMakeFiles/cmTC_d18fa.dir/build.make CMakeFiles/cmTC_d18fa.dir/build
+make[1]: Entering directory '/media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles/CMakeScratch/TryCompile-g7rWH9'
+Building C object CMakeFiles/cmTC_d18fa.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create -o CMakeFiles/cmTC_d18fa.dir/CheckFunctionExists.c.o -c /media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles/CMakeScratch/TryCompile-g7rWH9/CheckFunctionExists.c
+Linking C executable cmTC_d18fa
+/opt/cmake-3.25.1-linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d18fa.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=pthread_create CMakeFiles/cmTC_d18fa.dir/CheckFunctionExists.c.o -o cmTC_d18fa  -lpthreads 
 /usr/bin/ld: cannot find -lpthreads
 collect2: error: ld returned 1 exit status
-CMakeFiles/cmTC_ee2a9.dir/build.make:98: recipe for target 'cmTC_ee2a9' failed
-make[1]: *** [cmTC_ee2a9] Error 1
-make[1]: Leaving directory '/media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles/CMakeScratch/TryCompile-88zn4f'
-Makefile:127: recipe for target 'cmTC_ee2a9/fast' failed
-make: *** [cmTC_ee2a9/fast] Error 2
+CMakeFiles/cmTC_d18fa.dir/build.make:98: recipe for target 'cmTC_d18fa' failed
+make[1]: *** [cmTC_d18fa] Error 1
+make[1]: Leaving directory '/media/ExtraFiles/Jerboa/helloVulkan/build/CMakeFiles/CMakeScratch/TryCompile-g7rWH9'
+Makefile:127: recipe for target 'cmTC_d18fa/fast' failed
+make: *** [cmTC_d18fa/fast] Error 2
 
 
 
