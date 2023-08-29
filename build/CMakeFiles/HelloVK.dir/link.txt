@@ -1,0 +1,1 @@
+/usr/bin/c++  -pthread -g -Wall -g -rdynamic -no-pie CMakeFiles/HelloVK.dir/src/main.cpp.o -o HelloVK  -Wl,-rpath,. include/vendored/glfw/src/libglfw3.a -lvulkan -lrt -lm -ldl -lX11 -lpthread 
