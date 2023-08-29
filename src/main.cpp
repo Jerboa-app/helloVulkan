@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <stdexcept>
-#include <cstdlib>
 
 #include <Renderer/vulkan.h>
 
@@ -24,7 +23,7 @@ private:
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
 
-    Renderer::VulkanRenderer renderer;
+    Renderer::VulkanRenderer * renderer;
 
     void initWindow()
     {
@@ -35,9 +34,10 @@ private:
 
         window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
     }
+
     void initVulkan() 
     {
-
+        renderer = new Renderer::VulkanRenderer;
     }
 
     void mainLoop() 
@@ -52,6 +52,7 @@ private:
     {
         glfwDestroyWindow(window);
         glfwTerminate();
+        free(renderer);
     }
 };
 

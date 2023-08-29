@@ -33,6 +33,53 @@ namespace Renderer
         {
             throw std::runtime_error("failed to create instance!");
         }
+
+        if (enableValidationLayers)
+        {
+            checkValidationLayerSupport();
+        }
+    }
+
+    VulkanRenderer::~VulkanRenderer()
+    {
+        vkDestroyInstance(instance, nullptr);
+    }
+
+    bool VulkanRenderer::checkValidationLayerSupport()
+    {
+        
+        supportedValidationLayers();
+
+        for (std::string layerName : validationLayers)
+        {
+            bool layerFound = false;
+
+            for (const auto & layerProperties : availableLayers)
+            {
+                if (layerName == std::string(layerProperties.layerName))
+                {
+                    layerFound = true;
+                    break;
+                }
+            }
+
+            if (!layerFound)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    void VulkanRenderer::supportedValidationLayers()
+    {
+        uint32_t layerCount;
+        // get all the validation layers allowed
+        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+        availableLayers = std::vector<VkLayerProperties>(layerCount);
+        vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
     }
 
 }
