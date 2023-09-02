@@ -9,8 +9,8 @@
 #include <stdexcept>
 #include <vector>
 #include <string>
-
 #include <iostream>
+#include <optional>
 
 const std::vector<const char *> validationLayers = 
 {
@@ -26,6 +26,16 @@ const std::vector<const char *> validationLayers =
 namespace Renderer
 {
 
+    struct QueueFamilyIndices
+    {
+        std::optional<uint32_t> graphicsFamily;
+
+        bool isComplete()
+        {
+            return graphicsFamily.has_value();
+        }
+    };
+
     class VulkanRenderer : public AbstractRenderer
     {
 
@@ -38,11 +48,17 @@ namespace Renderer
         private:
 
             VkInstance instance;
+            VkPhysicalDevice device = VK_NULL_HANDLE;
 
             VkDebugUtilsMessengerEXT debugMessenger;
 
             std::vector<VkLayerProperties> availableLayers;
             std::vector<const char *> extensions;
+
+            void pickPhysicalDevice();
+            bool isSuitableDevice(VkPhysicalDevice device);
+
+            QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
             bool checkValidationLayerSupport();
             void supportedValidationLayers(bool print = false);

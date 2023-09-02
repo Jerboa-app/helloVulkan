@@ -50,6 +50,8 @@ namespace Renderer
         }
 
         setupDebugMessenger();
+
+        pickPhysicalDevice();
     }
 
     VulkanRenderer::~VulkanRenderer()
@@ -86,6 +88,76 @@ namespace Renderer
         }
 
         return true;
+    }
+
+    void VulkanRenderer::pickPhysicalDevice()
+    {
+        uint32_t deviceCount = 0;
+        vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+        if (deviceCount == 0)
+        {
+            throw std::runtime_error("No GPUs with Vulkan support");
+        }
+
+        std::vector<VkPhysicalDevice> devices(deviceCount);
+        vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+        VkPhysicalDeviceProperties deviceProperties;
+
+        for (const auto& device : devices)
+        {
+            vkGetPhysicalDeviceProperties(device, &deviceProperties);
+
+            std::cout << "Found device: " 
+                      << deviceProperties.deviceName << " v"
+                      << deviceProperties.driverVersion << "\n";
+
+            if (isSuitableDevice(device))
+            {
+                this->device = device;
+                break;
+            }
+        }
+    }
+
+    bool VulkanRenderer::isSuitableDevice(VkPhysicalDevice device)
+    {
+        VkPhysicalDeviceProperties deviceProperties;
+        VkPhysicalDeviceFeatures deviceFeatures;
+
+        vkGetPhysicalDeviceProperties(device, &deviceProperties);
+        vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+        QueueFamilyIndices indices = findQueueFamilies(device);
+
+        return indices.isComplete();
+    }
+
+    QueueFamilyIndices VulkanRenderer::findQueueFamilies(VkPhysicalDevice device)
+    {
+        QueueFamilyIndices indices;
+
+        uint32_t count;
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &count, nullptr);
+
+        std::vector<VkQueueFamilyProperties> queueFamilies(count);
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &count, queueFamilies.data());
+
+        unsigned i = 0;
+        for (const auto & queueFamily : queueFamilies)
+        {
+            if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+            {
+                indices.graphicsFamily = i;
+            }
+            if (indices.isComplete())
+            {
+                break;
+            }
+            i++;
+        }
+
+        return indices;
     }
 
     void VulkanRenderer::getRequiredExtensions()
