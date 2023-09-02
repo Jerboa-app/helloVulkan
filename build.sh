@@ -19,12 +19,18 @@ WINDOWS=1
 RELEASE=0
 TEST=0
 OSX=1
+VK_SDK=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
     -w|--windows)
       WINDOWS=0
       shift # past argument
+      ;;
+    --vk)
+      VK_SDK=$2
+      shift
+      shift
       ;;
     -o|--osx)
       OSX=0
@@ -64,6 +70,9 @@ done
 if [[ $WINDOWS -eq 0 ]];
 then 
   cmake -E make_directory build
+  export VULKAN_SDK=$VK_SDK
+  export VULKAN_LIBRARY="$VK_SDK/Lib"
+  export VULKAN_INCLUDE_DIR="$VK_SDK/Include" 
   cmake -E chdir build cmake .. -D WINDOWS=ON -D RELEASE=$RELEASE -D TEST_SUITE=$TEST -D CMAKE_TOOLCHAIN_FILE=./windows.cmake && make -j 8 -C build
   # now copy dlls
   PREFIX="x86_64-w64-mingw32"
@@ -86,7 +95,10 @@ then
   done 
   echo -e "###############\n"
 
-  dll=()
+  dll=("libgcc_s_seh-1.dll"
+    "libstdc++-6.dll"
+    "libwinpthread-1.dll"
+  )
 
   for j in "${dll[@]}"
   do

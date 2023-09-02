@@ -80,6 +80,11 @@ namespace Renderer
 
         availableLayers = std::vector<VkLayerProperties>(layerCount);
         vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+        for (const auto & layerProperties : availableLayers)
+        {
+            std::cout << layerProperties.layerName << "\n";
+        }
     }
 
 }
