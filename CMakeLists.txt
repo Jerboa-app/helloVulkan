@@ -25,6 +25,9 @@ endif ()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 set(CMAKE_BUILD_RPATH ".")
 
+find_package(Vulkan REQUIRED)
+include_directories(${Vulkan_INCLUDE_DIR})
+
 SET(CMAKE_FIND_LIBRARY_SUFFIXES ".so")
 add_subdirectory(include/vendored/glm)
 
@@ -39,7 +42,6 @@ file(GLOB SRC
     "src/*.cpp"
     "src/Renderer/*.cpp"
 )
-
 if (WINDOWS)
     add_compile_definitions(WINDOWS)
 
@@ -56,8 +58,6 @@ if (VALIDATION)
     add_compile_definitions(VALIDATION)
 endif()
 
-find_package(Vulkan REQUIRED)
-
 add_executable(HelloVK ${SRC})
 
-target_link_libraries(HelloVK glm glfw vulkan)
+target_link_libraries(HelloVK glm ${Vulkan_LIBRARIES} glfw)
