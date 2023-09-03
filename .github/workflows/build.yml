@@ -29,6 +29,7 @@ jobs:
         mkdir linux-x86_64
         chmod +x build/HelloVK
         cp build/HelloVK linux-x86_64/HelloVK-linux-x86_64 
+        cp build/*.spv linux-x86_64/
         cp LICENSE linux-x86_64/
 
     - name: buildArtifact
@@ -52,6 +53,7 @@ jobs:
         mkdir windows
         chmod +x build/HelloVK.exe
         cp build/HelloVK.exe windows/
+        cp build/*.spv windows/
         cp LICENSE windows/
     
     - name: buildArtifact
