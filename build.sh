@@ -117,3 +117,13 @@ else
   cmake -E make_directory build
   cmake -E chdir build cmake -D RELEASE=$RELEASE -D VALIDATION=$VALIDATION .. && make -j 8 -C build
 fi
+
+echo -e "\033[1;32mCompiling Shaders\033[0m"
+for i in $(ls include/Shaders)
+do 
+  name="${i%%.*}"
+  type="${i#*.}"
+  ./include/vendored/VulkanSDK/Linux/bin/glslc include/Shaders/$i -o $name.spv
+  mv $name.spv build/$name-$type.spv
+  echo -e "\033[1;36mCompiled $i into $name-$type.spv\033[0m"
+done

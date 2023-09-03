@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 
 #include <Renderer/renderer.h>
+#include <Shader/shader.h>
 
 #include <stdexcept>
 #include <vector>
@@ -65,14 +66,20 @@ namespace Renderer
         private:
 
             VkInstance instance;
+
             VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
             VkDevice device;
+
             VkQueue graphicsQueue, presentQueue;
+
             VkSurfaceKHR surface;
+
             VkSwapchainKHR swapChain;
             std::vector<VkImage> swapChainImages;
             VkFormat swapChainImageFormat;
             VkExtent2D swapChainExtent;
+
+            std::vector<VkImageView> swapChainImageViews;
 
             VkDebugUtilsMessengerEXT debugMessenger;
 
@@ -83,6 +90,7 @@ namespace Renderer
 
             void pickPhysicalDevice();
             bool isSuitableDevice(VkPhysicalDevice physicalDevice);
+            void createLogicalDevice();
 
             QueueFamilyIndices findQueueFamilies(VkPhysicalDevice physicalDevice);
 
@@ -90,18 +98,16 @@ namespace Renderer
             void supportedValidationLayers(bool print = false);
 
             bool checkDeviceExtensionSupport(VkPhysicalDevice physicalDevice);
+            void getRequiredExtensions();
 
             void createSwapChain(GLFWwindow * window);
-
             SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice physicalDevice);
-
             VkSurfaceFormatKHR chooseSwapChainSurfaceFormat(const std::vector<VkSurfaceFormatKHR> & availableFormats);
             VkPresentModeKHR chooseSwapChainPresentMode(const std::vector<VkPresentModeKHR> & availablePresentModes);
             VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR & capabilities, GLFWwindow * window);
+            void createImageView();
 
-            void createLogicalDevice();
-
-            void getRequiredExtensions();
+            void createGraphicsPipeline();
 
             void setupDebugMessenger();
             void destroyDebugMessenger();

@@ -41,6 +41,7 @@ include_directories(src)
 file(GLOB SRC 
     "src/*.cpp"
     "src/Renderer/*.cpp"
+    "src/Shader/*.cpp"
 )
 if (WINDOWS)
     add_compile_definitions(WINDOWS)
