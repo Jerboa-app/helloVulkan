@@ -110,7 +110,7 @@ jobs:
         with:
           name: windows
 
-      -name: pack windows
+      - name: pack windows
         run: zip windows.zip windows
 #     https://github.com/softprops/action-gh-release
       - name: release
