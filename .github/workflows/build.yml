@@ -71,7 +71,7 @@ jobs:
       - name: pack linux build
         run: |
           ls
-          zip linux-x86_64.zip linux-x86_64
+          zip linux-x86_64.zip ./*
           
       - name: get windows build
         uses: actions/download-artifact@v3
@@ -79,7 +79,7 @@ jobs:
           name: windows
 
       - name: pack windows
-        run: zip windows.zip windows
+        run: zip windows.zip ./*
 #     https://github.com/softprops/action-gh-release
       - name: release
         uses: softprops/action-gh-release@v1
