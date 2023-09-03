@@ -54,6 +54,7 @@ jobs:
         chmod +x build/HelloVK.exe
         cp build/HelloVK.exe windows/
         cp build/*.spv windows/
+        cp build/*.dll windows/
         cp LICENSE windows/
     
     - name: buildArtifact
