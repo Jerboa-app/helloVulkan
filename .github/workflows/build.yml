@@ -84,7 +84,7 @@ jobs:
           name: windows
 
       - name: pack windows
-        run: zip windows.zip HelloVK.exe LICENSE
+        run: zip windows.zip HelloVK.exe LICENSE *.spv
 #     https://github.com/softprops/action-gh-release
       - name: release
         uses: softprops/action-gh-release@v1
