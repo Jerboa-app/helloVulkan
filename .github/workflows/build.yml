@@ -56,38 +56,6 @@ jobs:
       with:
         name: windows
         path: windows
-      
-  linuxRun:
-    needs: linuxXlinux
-    runs-on: ubuntu-20.04
-    
-    steps:
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y xvfb x11-apps imagemagick
-
-      - name: get linux build
-        uses: actions/download-artifact@v3
-        with:
-          name: linux-x86_64
-
-      - name: launch and screenshot
-        run: |
-          ls
-          chmod +x HelloVK-linux-x86_64
-          export DISPLAY=:99
-          sudo Xvfb :99 -screen 0 800x600x24 &
-          sleep 5
-          MESA_GL_VERSION_OVERRIDE=3.3 ./HelloVK-linux-x86_64 &
-          export PID=$!
-          sleep 10
-          xwd -root -silent | convert xwd:- png:screenshot.png
-          sleep 5 && kill $PID
-          
-      - name: upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: screenshot
-          path: screenshot.png
 
   release:
     needs: [linuxXlinux, linuxXwindows]
