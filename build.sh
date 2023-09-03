@@ -78,7 +78,7 @@ then
   export VULKAN_SDK=$VK_SDK/Windows
   export VULKAN_LIBRARY="$VK_SDK/Windows/Lib"
   export VULKAN_INCLUDE_DIR="$VK_SDK/Windows/Include" 
-  cmake -E chdir build cmake --debug-find .. -D WINDOWS=ON -D RELEASE=$RELEASE -D CMAKE_TOOLCHAIN_FILE=./windows.cmake && make -j 8 -C build
+  cmake -E chdir build cmake .. -D WINDOWS=ON -D RELEASE=$RELEASE -D CMAKE_TOOLCHAIN_FILE=./windows.cmake && make -j 8 -C build
   # now copy dlls
   PREFIX="x86_64-w64-mingw32"
 
