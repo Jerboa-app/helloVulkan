@@ -2,7 +2,7 @@ name: Builds
 
 permissions:
   contents: write
-  
+
 on:
   push:
     branches: [ "main" ]
@@ -82,7 +82,7 @@ jobs:
           name: windows
 
       - name: pack windows
-        run: zip windows.zip ./*
+        run: zip windows.zip HelloVK.exe LICENSE
 #     https://github.com/softprops/action-gh-release
       - name: release
         uses: softprops/action-gh-release@v1
