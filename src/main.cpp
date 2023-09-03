@@ -39,7 +39,7 @@ private:
 
     void initVulkan() 
     {
-        renderer = std::move(std::make_unique<Renderer::VulkanRenderer>());
+        renderer = std::move(std::make_unique<Renderer::VulkanRenderer>(window));
     }
 
     void mainLoop() 

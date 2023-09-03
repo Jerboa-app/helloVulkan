@@ -11,6 +11,8 @@
 #include <string>
 #include <iostream>
 #include <optional>
+#include <set>
+#include <map>
 
 const std::vector<const char *> validationLayers = 
 {
@@ -29,10 +31,11 @@ namespace Renderer
     struct QueueFamilyIndices
     {
         std::optional<uint32_t> graphicsFamily;
+        std::optional<uint32_t> presentFamily;
 
         bool isComplete()
         {
-            return graphicsFamily.has_value();
+            return graphicsFamily.has_value() && presentFamily.has_value();
         }
     };
 
@@ -41,7 +44,7 @@ namespace Renderer
 
         public:
 
-            VulkanRenderer();
+            VulkanRenderer(GLFWwindow * window);
 
             ~VulkanRenderer();
 
@@ -50,11 +53,15 @@ namespace Renderer
             VkInstance instance;
             VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
             VkDevice device;
+            VkQueue graphicsQueue, presentQueue;
+            VkSurfaceKHR surface;
 
             VkDebugUtilsMessengerEXT debugMessenger;
 
             std::vector<VkLayerProperties> availableLayers;
             std::vector<const char *> extensions;
+
+            void createSurface(GLFWwindow * window);
 
             void pickPhysicalDevice();
             bool isSuitableDevice(VkPhysicalDevice physicalDevice);
