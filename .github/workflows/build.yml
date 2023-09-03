@@ -1,0 +1,125 @@
+name: Builds
+
+on:
+  push:
+    branches: [ "main" ]
+    tags:     'v*'
+    paths-ignore:
+      - 'doc/**'
+      - '.github/**'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  linuxXlinux:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y build-essential xorg-dev mesa-common-dev libx11-dev libxrandr-dev libgl1-mesa-dev libglu1-mesa-dev libfreetype6-dev libopenal-dev libsndfile1-dev libudev-dev libxinerama-dev libxcursor-dev xvfb x11-apps vulkan-tools libvulkan-dev vulkan-validationlayers-dev spirv-tools
+
+    - name: linux-linux
+      run: |
+        ./build.sh -r
+        mkdir linux-x86_64
+        chmod +x build/HelloVulkan
+        cp build/HelloVulkan linux-x86_64/HelloVulkan-linux-x86_64 
+        cp LICENSE linux-x86_64/
+
+    - name: buildArtifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: linux-x86_64
+        path: linux-x86_64
+    
+  linuxXwindows:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y xorg-dev build-essential mesa-common-dev libx11-dev libxrandr-dev libgl1-mesa-dev libglu1-mesa-dev libfreetype6-dev libopenal-dev libsndfile1-dev libudev-dev g++-mingw-w64-x86-64-posix gcc-mingw-w64-x86-64-posix libxinerama-dev libxcursor-dev
+
+    - name: linux-X-windows
+      run: |
+        ./build.sh -w -r
+        mkdir windows
+        chmod +x build/HelloVulkan.exe
+        cp build/HelloVulkan.exe windows/
+        cp LICENSE windows/
+    
+    - name: buildArtifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows
+        path: windows
+      
+  linuxRun:
+    needs: linuxXlinux
+    runs-on: ubuntu-20.04
+    
+    steps:
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y xvfb x11-apps imagemagick
+
+      - name: get linux build
+        uses: actions/download-artifact@v3
+        with:
+          name: linux-x86_64
+
+      - name: launch and screenshot
+        run: |
+          ls
+          chmod +x HelloVulkan-linux-x86_64
+          export DISPLAY=:99
+          sudo Xvfb :99 -screen 0 800x600x24 &
+          sleep 5
+          MESA_GL_VERSION_OVERRIDE=3.3 ./HelloVulkan-linux-x86_64 &
+          export PID=$!
+          sleep 10
+          xwd -root -silent | convert xwd:- png:screenshot.png
+          sleep 5 && kill $PID
+          
+      - name: upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: screenshot
+          path: screenshot.png
+
+  release:
+    needs: [linuxXlinux, linuxXwindows]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-20.04
+    
+    steps:
+      - name: get linux build
+        uses: actions/download-artifact@v3
+        with:
+          name: linux-x86_64
+
+      - name: pack linux build
+        run: |
+          ls
+          zip linux-x86_64.zip linux-x86_64
+          
+      - name: get windows build
+        uses: actions/download-artifact@v3
+        with:
+          name: windows
+
+      -name: pack windows
+        run: zip windows.zip windows
+#     https://github.com/softprops/action-gh-release
+      - name: release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          prerelease: true
+          name: "release-${{ github.ref_name }}"
+          tag_name: ${{ github.ref }}
+          files: |
+            linux-x86_64.zip
+            windows.zip

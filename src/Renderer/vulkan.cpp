@@ -52,10 +52,14 @@ namespace Renderer
         setupDebugMessenger();
 
         pickPhysicalDevice();
+
+        createLogicalDevice();
     }
 
     VulkanRenderer::~VulkanRenderer()
     {
+        vkDestroyDevice(device, nullptr);
+
         if (enableValidationLayers)
         {
             destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
@@ -104,44 +108,44 @@ namespace Renderer
 
         VkPhysicalDeviceProperties deviceProperties;
 
-        for (const auto& device : devices)
+        for (const auto& physicalDevice : devices)
         {
-            vkGetPhysicalDeviceProperties(device, &deviceProperties);
+            vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
 
-            std::cout << "Found device: " 
+            std::cout << "Found physicalDevice: " 
                       << deviceProperties.deviceName << " v"
                       << deviceProperties.driverVersion << "\n";
 
-            if (isSuitableDevice(device))
+            if (isSuitableDevice(physicalDevice))
             {
-                this->device = device;
+                this->physicalDevice = physicalDevice;
                 break;
             }
         }
     }
 
-    bool VulkanRenderer::isSuitableDevice(VkPhysicalDevice device)
+    bool VulkanRenderer::isSuitableDevice(VkPhysicalDevice physicalDevice)
     {
         VkPhysicalDeviceProperties deviceProperties;
         VkPhysicalDeviceFeatures deviceFeatures;
 
-        vkGetPhysicalDeviceProperties(device, &deviceProperties);
-        vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+        vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
+        vkGetPhysicalDeviceFeatures(physicalDevice, &deviceFeatures);
 
-        QueueFamilyIndices indices = findQueueFamilies(device);
+        QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
         return indices.isComplete();
     }
 
-    QueueFamilyIndices VulkanRenderer::findQueueFamilies(VkPhysicalDevice device)
+    QueueFamilyIndices VulkanRenderer::findQueueFamilies(VkPhysicalDevice physicalDevice)
     {
         QueueFamilyIndices indices;
 
         uint32_t count;
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &count, nullptr);
+        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, nullptr);
 
         std::vector<VkQueueFamilyProperties> queueFamilies(count);
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &count, queueFamilies.data());
+        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, queueFamilies.data());
 
         unsigned i = 0;
         for (const auto & queueFamily : queueFamilies)
@@ -158,6 +162,45 @@ namespace Renderer
         }
 
         return indices;
+    }
+
+    void VulkanRenderer::createLogicalDevice()
+    {
+        QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+
+        VkDeviceQueueCreateInfo queueCreateInfo {};
+
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+        queueCreateInfo.queueCount = 1;
+        // priority between 0 and 1
+        float priority = 1.0f;
+        queueCreateInfo.pQueuePriorities = &priority;
+
+        VkPhysicalDeviceFeatures deviceFeatures{};
+
+        VkDeviceCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        createInfo.pQueueCreateInfos = &queueCreateInfo;
+        createInfo.queueCreateInfoCount = 1;
+        createInfo.pEnabledFeatures = &deviceFeatures;
+
+        // compat with older vulkan https://vulkan-tutorial.com/en/Drawing_a_triangle/Setup/Logical_device_and_queues
+        createInfo.enabledExtensionCount = 0;
+        if (enableValidationLayers)
+        {
+            createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+            createInfo.ppEnabledLayerNames = validationLayers.data();
+        }
+        else
+        {
+            createInfo.enabledLayerCount = 0;
+        }
+
+        if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create logical device");
+        }
     }
 
     void VulkanRenderer::getRequiredExtensions()

@@ -48,7 +48,8 @@ namespace Renderer
         private:
 
             VkInstance instance;
-            VkPhysicalDevice device = VK_NULL_HANDLE;
+            VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+            VkDevice device;
 
             VkDebugUtilsMessengerEXT debugMessenger;
 
@@ -56,12 +57,14 @@ namespace Renderer
             std::vector<const char *> extensions;
 
             void pickPhysicalDevice();
-            bool isSuitableDevice(VkPhysicalDevice device);
+            bool isSuitableDevice(VkPhysicalDevice physicalDevice);
 
-            QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+            QueueFamilyIndices findQueueFamilies(VkPhysicalDevice physicalDevice);
 
             bool checkValidationLayerSupport();
             void supportedValidationLayers(bool print = false);
+
+            void createLogicalDevice();
 
             void getRequiredExtensions();
 
