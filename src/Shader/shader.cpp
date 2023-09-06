@@ -29,7 +29,7 @@ namespace Renderer
         return buffer;
     }
 
-    void Shader::createShaderModules(VkDevice device)
+    void Shader::createShaderModules(const VkDevice & device)
     {
         VkShaderModuleCreateInfo createInfo {};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;

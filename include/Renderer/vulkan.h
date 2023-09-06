@@ -74,6 +74,13 @@ namespace Renderer
 
             VkSurfaceKHR surface;
 
+            VkViewport viewport;
+            VkRect2D scissor;
+
+            VkRenderPass renderPass;
+            VkPipelineLayout pipelineLayout;
+            VkPipeline pipeline;
+
             VkSwapchainKHR swapChain;
             std::vector<VkImage> swapChainImages;
             VkFormat swapChainImageFormat;
@@ -105,7 +112,9 @@ namespace Renderer
             VkSurfaceFormatKHR chooseSwapChainSurfaceFormat(const std::vector<VkSurfaceFormatKHR> & availableFormats);
             VkPresentModeKHR chooseSwapChainPresentMode(const std::vector<VkPresentModeKHR> & availablePresentModes);
             VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR & capabilities, GLFWwindow * window);
-            void createImageView();
+            void createImageViews();
+
+            void createRenderPass();
 
             void createGraphicsPipeline();
 

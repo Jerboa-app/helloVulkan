@@ -23,6 +23,7 @@ namespace Renderer
         {
             vertexSource = readSPIRV(programName+"-vert.spv");
             fragmentSource = readSPIRV(programName+"-frag.spv");
+            createShaderModules(device);
         }
 
         ~Shader();
@@ -38,7 +39,7 @@ namespace Renderer
         std::vector<char> vertexSource, fragmentSource;
 
         std::vector<char> readSPIRV(const std::string & filename);
-        void createShaderModules(VkDevice device);
+        void createShaderModules(const VkDevice & device);
     };
 }
 

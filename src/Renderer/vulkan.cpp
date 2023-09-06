@@ -5,6 +5,8 @@ namespace Renderer
 
     VulkanRenderer::VulkanRenderer(GLFWwindow * window)
     {
+        viewport = VkViewport{};
+        scissor = VkRect2D{};
         // optional application information
         // can be used for optimisation  by driver 
         VkApplicationInfo appInfo;
@@ -60,17 +62,25 @@ namespace Renderer
 
         createSwapChain(window);
 
-        Shader trig(device, "trig");
+        createImageViews();
+
+        createRenderPass();
+
+        createGraphicsPipeline();
     }
 
     VulkanRenderer::~VulkanRenderer()
     {
-        vkDestroyDevice(device, nullptr);
-
         if (enableValidationLayers)
         {
             destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
         }
+
+        vkDestroyPipeline(device, pipeline, nullptr);
+        
+        vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+        
+        vkDestroyRenderPass(device, renderPass, nullptr);
 
         for (auto imageView : swapChainImageViews)
         {
@@ -78,6 +88,8 @@ namespace Renderer
         }
 
         vkDestroySwapchainKHR(device, swapChain, nullptr);
+
+        vkDestroyDevice(device, nullptr);
 
         vkDestroySurfaceKHR(instance, surface, nullptr);
 
@@ -515,7 +527,7 @@ namespace Renderer
         }
     }
 
-    void VulkanRenderer::createImageView()
+    void VulkanRenderer::createImageViews()
     {
         swapChainImageViews.resize(swapChainImages.size());
         for(size_t i = 0; i < swapChainImages.size(); i++)
@@ -544,9 +556,183 @@ namespace Renderer
         }
     }
 
-    void createGraphicsPipeline()
+    void VulkanRenderer::createGraphicsPipeline()
     {
+
+        Shader trig(device, "trig");
+        std::vector<VkPipelineShaderStageCreateInfo> shaderStages = trig.shaderStage();
+
+        VkPipelineVertexInputStateCreateInfo vertexInputInfo {};
+        vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertexInputInfo.vertexBindingDescriptionCount = 0;
+        vertexInputInfo.pVertexBindingDescriptions = nullptr;
+        vertexInputInfo.vertexAttributeDescriptionCount = 0;
+        vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+
+        VkPipelineInputAssemblyStateCreateInfo inputAssembly {};
+        inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+        inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        // if true can break up line or triangle strips
+        inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+        viewport.x = 0.0f;
+        viewport.y = 0.0f;
+        viewport.width = (float) swapChainExtent.width;
+        viewport.height = (float) swapChainExtent.height;
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+
+        scissor.offset = {0, 0};
+        scissor.extent = swapChainExtent;
+
+        // for dynamic scissor and viewport
+        //  can be changed without rebuilding
+        //  pipeline
+        std::vector<VkDynamicState> dynamicStates =
+        {
+            VK_DYNAMIC_STATE_VIEWPORT,
+            VK_DYNAMIC_STATE_SCISSOR
+        };
+
+        VkPipelineDynamicStateCreateInfo dynamicState{};
+        dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+        dynamicState.pDynamicStates = dynamicStates.data();
+
+        VkPipelineViewportStateCreateInfo viewportState{};
+        viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewportState.viewportCount = 1;
+        viewportState.scissorCount = 1;
+
+        VkPipelineRasterizationStateCreateInfo rasterInfo{};
+        rasterInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+        rasterInfo.depthClampEnable = VK_FALSE;
+        // true disables framebuffer output
+        rasterInfo.rasterizerDiscardEnable = VK_FALSE;
+        rasterInfo.polygonMode = VK_POLYGON_MODE_FILL;
+        // 1.0f requires wideLines enabled
+        rasterInfo.lineWidth = 1.0f;
+        rasterInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+        rasterInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+        rasterInfo.depthBiasEnable = VK_FALSE;
+        rasterInfo.depthBiasConstantFactor = 0.0f;
+        rasterInfo.depthBiasClamp = 0.0f;
+        rasterInfo.depthBiasSlopeFactor = 0.0f;
+
+        VkPipelineMultisampleStateCreateInfo multisampling{};
+        multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+        multisampling.sampleShadingEnable = VK_FALSE;
+        multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+        multisampling.minSampleShading = 1.0f;
+        multisampling.pSampleMask = nullptr;
+        multisampling.alphaToCoverageEnable = VK_FALSE;
+        multisampling.alphaToOneEnable = VK_FALSE;
+
+        VkPipelineColorBlendAttachmentState colourBlendAttachment{};
+        colourBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        colourBlendAttachment.blendEnable = VK_TRUE;
+        colourBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        colourBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        colourBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+        colourBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        colourBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        colourBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+
+        VkPipelineColorBlendStateCreateInfo colourBlending{};
+        colourBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        colourBlending.logicOpEnable = VK_FALSE;
+        colourBlending.logicOp = VK_LOGIC_OP_COPY; 
+        colourBlending.attachmentCount = 1;
+        colourBlending.pAttachments = &colourBlendAttachment;
+        colourBlending.blendConstants[0] = 0.0f; 
+        colourBlending.blendConstants[1] = 0.0f; 
+        colourBlending.blendConstants[2] = 0.0f;
+        colourBlending.blendConstants[3] = 0.0f;
+
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutInfo.setLayoutCount = 0;
+        pipelineLayoutInfo.pSetLayouts  = nullptr;
+        pipelineLayoutInfo.pushConstantRangeCount = 0;
+        pipelineLayoutInfo.pPushConstantRanges = nullptr;
+
+        if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed ot create pipeline layout");
+        }
+
+        VkGraphicsPipelineCreateInfo pipelineInfo{};
+        pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        pipelineInfo.stageCount = 2;
+        // shaders
+        pipelineInfo.pStages = shaderStages.data();
+        // fixed functions
+        pipelineInfo.pVertexInputState = &vertexInputInfo;
+        pipelineInfo.pInputAssemblyState = &inputAssembly;
+        pipelineInfo.pViewportState = &viewportState;
+        pipelineInfo.pRasterizationState = &rasterInfo;
+        pipelineInfo.pMultisampleState = &multisampling;
+        pipelineInfo.pDepthStencilState = nullptr;
+        pipelineInfo.pColorBlendState = &colourBlending;
+        pipelineInfo.pDynamicState = &dynamicState;
         
+        pipelineInfo.layout = pipelineLayout;
+
+        pipelineInfo.renderPass = renderPass;
+        pipelineInfo.subpass = 0;
+
+        // inheritance
+        pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+        pipelineInfo.basePipelineIndex = -1;
+
+        if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create graphics pipline");
+        }
+
+    }
+
+    void VulkanRenderer::createRenderPass()
+    {
+        VkAttachmentDescription colourAttachment{};
+        colourAttachment.format = swapChainImageFormat;
+        colourAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        // do before rendering; clear
+        colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        // do after rendering, store
+        colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        // not using stencil data; don't care
+        colourAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colourAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        // we clear image so don't need to worry about intial layout
+        colourAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        // image is auto converted to presentation layout
+        colourAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+        // one subpass
+
+        // e.g. layout(location = 0) out vec4 outColour
+        VkAttachmentReference colourAttachmentRef{};
+        colourAttachmentRef.attachment = 0;
+        colourAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+        VkSubpassDescription subpass{};
+        // specify as a graphics subpass
+        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        subpass.colorAttachmentCount = 1;
+        subpass.pColorAttachments = &colourAttachmentRef;
+
+        VkRenderPassCreateInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        renderPassInfo.attachmentCount = 1;
+        renderPassInfo.pAttachments = &colourAttachment;
+        renderPassInfo.subpassCount = 1;
+        renderPassInfo.pSubpasses = &subpass;
+
+        if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create render pass");
+        }
     }
 
     void VulkanRenderer::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT & createInfo) {
