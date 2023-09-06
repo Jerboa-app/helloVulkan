@@ -47,6 +47,7 @@ private:
         while(!glfwWindowShouldClose(window))
         {
             glfwPollEvents();
+            renderer->drawFrame();
         }
     }
 
@@ -55,6 +56,8 @@ private:
         glfwDestroyWindow(window);
         glfwTerminate();
     }
+
+
 };
 
 int main() 

@@ -67,10 +67,22 @@ namespace Renderer
         createRenderPass();
 
         createGraphicsPipeline();
+
+        createFramebuffers();
+
+        createCommandPool();
+
+        createCommandBuffer();
+
+        createSyncObjects();
     }
 
     VulkanRenderer::~VulkanRenderer()
     {
+
+        vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
+        vkDestroySemaphore(device, renderFinsihedSemaphore, nullptr);
+        vkDestroyFence(device, frameFinished, nullptr);
 
         vkDestroyCommandPool(device, commandPool, nullptr);
 
@@ -595,12 +607,24 @@ namespace Renderer
         subpass.colorAttachmentCount = 1;
         subpass.pColorAttachments = &colourAttachmentRef;
 
+        VkSubpassDependency dependency{};
+        dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+        dependency.dstSubpass = 0;
+        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependency.srcAccessMask = 0;
+        // wait on the colour attachment output stage
+        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
         VkRenderPassCreateInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         renderPassInfo.attachmentCount = 1;
         renderPassInfo.pAttachments = &colourAttachment;
         renderPassInfo.subpassCount = 1;
         renderPassInfo.pSubpasses = &subpass;
+
+        renderPassInfo.dependencyCount = 1;
+        renderPassInfo.pDependencies = &dependency;
 
         if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
         {
@@ -848,6 +872,32 @@ namespace Renderer
 
     }
 
+    void VulkanRenderer::createSyncObjects()
+    {
+        VkSemaphoreCreateInfo semaphoreInfo{};
+        semaphoreInfo.sType =  VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        VkFenceCreateInfo fenceInfo{};
+        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        // begin signalled
+        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+        if 
+        (
+            vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS ||
+            vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinsihedSemaphore) != VK_SUCCESS
+        )
+        {
+            throw std::runtime_error("Failed to create semaphore");
+        }
+
+        if (vkCreateFence(device, &fenceInfo, nullptr, &frameFinished) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create fence");
+        }
+
+
+    }
+
     void VulkanRenderer::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT & createInfo) {
         createInfo = {};
         createInfo.sType =              VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -873,6 +923,56 @@ namespace Renderer
         }
     }
 
-    void destroyDebugMessenger();
+    void VulkanRenderer::drawFrame()
+    {
+        // aquire an image
+        uint32_t imageIndex; 
+        vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+        
+        vkResetCommandBuffer(commandBuffer, 0);
+        recordCommandBuffer(commandBuffer, imageIndex);
+        // submit the command buffer 
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        // wait on this semaphore
+        VkSemaphore waitSemaphores[] = {imageAvailableSemaphore};
+        // in this stage of the pipline
+        VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+        submitInfo.waitSemaphoreCount = 1;
+        submitInfo.pWaitSemaphores = waitSemaphores;
+        submitInfo.pWaitDstStageMask = waitStages;
+
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffer;
+
+        VkSemaphore signalSemaphores[] = {renderFinsihedSemaphore};
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = signalSemaphores;
+
+        vkResetFences(device, 1, &frameFinished);
+
+        if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, frameFinished) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to submit draw comamnd buffer");
+        }
+
+        VkPresentInfoKHR presentInfo{};
+        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = signalSemaphores;
+
+        VkSwapchainKHR swapChains[] = {swapChain};
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains = swapChains;
+        presentInfo.pImageIndices = &imageIndex;
+        // can check on success
+        presentInfo.pResults = nullptr;
+        vkQueuePresentKHR(presentQueue, &presentInfo);
+        
+        // VK_TRUE = wait for all fences
+        // last is a timeout integer
+        vkWaitForFences(device, 1, &frameFinished, VK_TRUE, UINT64_MAX);
+        vkResetFences(device, 1, &frameFinished);
+    }
 
 }

@@ -63,6 +63,8 @@ namespace Renderer
 
             ~VulkanRenderer();
 
+            void drawFrame();
+
         private:
 
             VkInstance instance;
@@ -83,6 +85,9 @@ namespace Renderer
 
             VkCommandPool commandPool;
             VkCommandBuffer commandBuffer;
+
+            VkSemaphore imageAvailableSemaphore, renderFinsihedSemaphore;
+            VkFence frameFinished;
 
             VkSwapchainKHR swapChain;
             std::vector<VkImage> swapChainImages;
@@ -128,8 +133,9 @@ namespace Renderer
             void createCommandBuffer();
             void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
+            void createSyncObjects();
+
             void setupDebugMessenger();
-            void destroyDebugMessenger();
 
             static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback
             (
