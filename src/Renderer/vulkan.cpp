@@ -71,6 +71,9 @@ namespace Renderer
 
     VulkanRenderer::~VulkanRenderer()
     {
+
+        vkDestroyCommandPool(device, commandPool, nullptr);
+
         if (enableValidationLayers)
         {
             destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
@@ -562,6 +565,49 @@ namespace Renderer
         }
     }
 
+    void VulkanRenderer::createRenderPass()
+    {
+        VkAttachmentDescription colourAttachment{};
+        colourAttachment.format = swapChainImageFormat;
+        colourAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        // do before rendering; clear
+        colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        // do after rendering, store
+        colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        // not using stencil data; don't care
+        colourAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colourAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        // we clear image so don't need to worry about intial layout
+        colourAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        // image is auto converted to presentation layout
+        colourAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+        // one subpass
+
+        // e.g. layout(location = 0) out vec4 outColour
+        VkAttachmentReference colourAttachmentRef{};
+        colourAttachmentRef.attachment = 0;
+        colourAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+        VkSubpassDescription subpass{};
+        // specify as a graphics subpass
+        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        subpass.colorAttachmentCount = 1;
+        subpass.pColorAttachments = &colourAttachmentRef;
+
+        VkRenderPassCreateInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        renderPassInfo.attachmentCount = 1;
+        renderPassInfo.pAttachments = &colourAttachment;
+        renderPassInfo.subpassCount = 1;
+        renderPassInfo.pSubpasses = &subpass;
+
+        if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create render pass");
+        }
+    }
+
     void VulkanRenderer::createGraphicsPipeline()
     {
 
@@ -722,47 +768,84 @@ namespace Renderer
         }
     }
 
-    void VulkanRenderer::createRenderPass()
+    void VulkanRenderer::createCommandPool()
     {
-        VkAttachmentDescription colourAttachment{};
-        colourAttachment.format = swapChainImageFormat;
-        colourAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-        // do before rendering; clear
-        colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        // do after rendering, store
-        colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        // not using stencil data; don't care
-        colourAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        colourAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        // we clear image so don't need to worry about intial layout
-        colourAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        // image is auto converted to presentation layout
-        colourAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
 
-        // one subpass
+        VkCommandPoolCreateInfo poolInfo{};
+        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        // command buffers can be rerecorded individually
+        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
-        // e.g. layout(location = 0) out vec4 outColour
-        VkAttachmentReference colourAttachmentRef{};
-        colourAttachmentRef.attachment = 0;
-        colourAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-        VkSubpassDescription subpass{};
-        // specify as a graphics subpass
-        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpass.colorAttachmentCount = 1;
-        subpass.pColorAttachments = &colourAttachmentRef;
-
-        VkRenderPassCreateInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.attachmentCount = 1;
-        renderPassInfo.pAttachments = &colourAttachment;
-        renderPassInfo.subpassCount = 1;
-        renderPassInfo.pSubpasses = &subpass;
-
-        if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
+        if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
         {
-            throw std::runtime_error("Failed to create render pass");
+            throw std::runtime_error("Failed to creaate command pool");
         }
+
+    }
+
+    void VulkanRenderer::createCommandBuffer()
+    {
+
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.commandPool = commandPool;
+        // cannot be called from other command buffers, only submitted
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandBufferCount = 1;
+
+        if (vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to allocate command buffers");
+        }
+
+    }
+
+    void VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+    {
+        VkCommandBufferBeginInfo beginInfo{};
+
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = 0;
+        beginInfo.pInheritanceInfo = nullptr;
+        
+        if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to begin recording command buffer");
+        }
+
+        VkRenderPassBeginInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassInfo.renderPass = renderPass;
+        renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+        // size of the render area for shader 
+        renderPassInfo.renderArea.offset = {0, 0};
+        renderPassInfo.renderArea.extent = swapChainExtent;
+        // set the clear values fo VK_ATTACHMENT_LOAD_OP_CLEAR;
+        VkClearValue clearColour = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+        renderPassInfo.clearValueCount = 1;
+        renderPassInfo.pClearValues = &clearColour;
+
+        vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+        // dynamics viewport and scissor
+        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+        // the draw command is issues
+        // vertexCount, instanceCount, firstVertex, firstInstance
+        vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
+        // end
+        vkCmdEndRenderPass(commandBuffer);
+        if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to record command buffer");
+        }
+
     }
 
     void VulkanRenderer::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT & createInfo) {

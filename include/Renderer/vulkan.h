@@ -81,6 +81,9 @@ namespace Renderer
             VkPipelineLayout pipelineLayout;
             VkPipeline pipeline;
 
+            VkCommandPool commandPool;
+            VkCommandBuffer commandBuffer;
+
             VkSwapchainKHR swapChain;
             std::vector<VkImage> swapChainImages;
             VkFormat swapChainImageFormat;
@@ -120,6 +123,10 @@ namespace Renderer
             void createGraphicsPipeline();
 
             void createFramebuffers();
+
+            void createCommandPool();
+            void createCommandBuffer();
+            void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
             void setupDebugMessenger();
             void destroyDebugMessenger();
