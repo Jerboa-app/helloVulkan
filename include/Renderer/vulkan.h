@@ -65,6 +65,8 @@ namespace Renderer
 
             void drawFrame();
 
+            void finish(){ vkDeviceWaitIdle(device); }
+
         private:
 
             VkInstance instance;

@@ -49,6 +49,8 @@ private:
             glfwPollEvents();
             renderer->drawFrame();
         }
+
+        renderer->finish();
     }
 
     void cleanup() 
