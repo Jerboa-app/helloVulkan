@@ -87,6 +87,7 @@ namespace Renderer
             VkExtent2D swapChainExtent;
 
             std::vector<VkImageView> swapChainImageViews;
+            std::vector<VkFramebuffer> swapChainFramebuffers;
 
             VkDebugUtilsMessengerEXT debugMessenger;
 
@@ -117,6 +118,8 @@ namespace Renderer
             void createRenderPass();
 
             void createGraphicsPipeline();
+
+            void createFramebuffers();
 
             void setupDebugMessenger();
             void destroyDebugMessenger();

@@ -77,8 +77,13 @@ namespace Renderer
         }
 
         vkDestroyPipeline(device, pipeline, nullptr);
-        
+
         vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+
+        for (auto framebuffer : swapChainFramebuffers)
+        {
+            vkDestroyFramebuffer(device, framebuffer, nullptr);
+        }
         
         vkDestroyRenderPass(device, renderPass, nullptr);
 
@@ -544,6 +549,7 @@ namespace Renderer
             createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
             createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             createInfo.subresourceRange.baseMipLevel = 0;
+            createInfo.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
             // layers can be used for 3d images
             createInfo.subresourceRange.layerCount = 1;
             createInfo.subresourceRange.baseArrayLayer = 0;
@@ -690,6 +696,30 @@ namespace Renderer
             throw std::runtime_error("Failed to create graphics pipline");
         }
 
+    }
+
+    void VulkanRenderer::createFramebuffers()
+    {
+        swapChainFramebuffers.resize(swapChainImageViews.size());
+
+        for (size_t i = 0; i < swapChainImageViews.size(); i++)
+        {
+            VkImageView attchaments[] = {swapChainImageViews[i]};
+
+            VkFramebufferCreateInfo framebufferInfo{};
+            framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+            framebufferInfo.renderPass = renderPass;
+            framebufferInfo.attachmentCount = 1;
+            framebufferInfo.pAttachments = attchaments;
+            framebufferInfo.width = swapChainExtent.width;
+            framebufferInfo.height = swapChainExtent.height;
+            framebufferInfo.layers = 1;
+
+            if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS)
+            {
+                throw std::runtime_error("Failed to create framebuffer");
+            }
+        }
     }
 
     void VulkanRenderer::createRenderPass()
