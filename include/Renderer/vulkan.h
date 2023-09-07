@@ -3,6 +3,7 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 
 #include <Renderer/renderer.h>
 #include <Shader/shader.h>
@@ -16,6 +17,8 @@
 #include <map>
 #include <limits>
 #include <algorithm>
+#include <array>
+#include <cstring>
 
 const int MAX_CONCURRENT_FRAMES = 2;
 
@@ -34,6 +37,50 @@ const std::vector<const char *> deviceExtensions =
 #else
     const bool enableValidationLayers = false;
 #endif
+
+struct Vertex 
+{
+    glm::vec2 pos;
+    glm::vec3 colour;
+
+    static VkVertexInputBindingDescription getBindingDescription()
+    {
+        VkVertexInputBindingDescription bindingDescription{};
+        bindingDescription.binding = 0;
+        bindingDescription.stride = sizeof(Vertex);
+        // can also be VK_VERTEX_INPUT_RATE_INSTANCE to move each instance
+        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+        return bindingDescription;
+    }
+
+    static std::array<VkVertexInputAttributeDescription, 2> getArrtibuteDescriptions()
+    {
+        std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+        // vertex binding, 0
+        attributeDescriptions[0].binding = 0;
+        // layout(location = 0)
+        attributeDescriptions[0].location = 0;
+        // we have a vec2, so R32, G32, as single float
+        attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+        // auto calulate offset via macro
+        attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
+        attributeDescriptions[1].binding = 0;
+        attributeDescriptions[1].location = 1;
+        attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+        attributeDescriptions[1].offset = offsetof(Vertex, colour);
+
+        return attributeDescriptions;
+    }
+};
+
+
+const std::vector<Vertex> vertices = 
+{
+    {{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
+    {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+};
 
 namespace Renderer
 {
@@ -89,6 +136,9 @@ namespace Renderer
             VkPipelineLayout pipelineLayout;
             VkPipeline pipeline;
 
+            VkBuffer vertexBuffer;
+            VkDeviceMemory vertexBufferMemory;
+
             VkCommandPool commandPool;
             std::vector<VkCommandBuffer> commandBuffers;
 
@@ -140,6 +190,8 @@ namespace Renderer
             void createGraphicsPipeline();
 
             void createFramebuffers();
+
+            void createVertexBuffer();
 
             void createCommandPool();
             void createCommandBuffers();
@@ -212,6 +264,9 @@ namespace Renderer
             }
 
             void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT & createInfo);
+
+            uint32_t findMemoryType(uint32_t typeFiller, VkMemoryPropertyFlags properties);
+
     };
 
 }
