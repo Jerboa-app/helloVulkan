@@ -77,6 +77,8 @@ namespace Renderer
 
         createGraphicsPipeline();
 
+        createColorResources();
+
         createFramebuffers();
 
         createCommandPool();
@@ -96,6 +98,11 @@ namespace Renderer
 
     VulkanRenderer::~VulkanRenderer()
     {
+
+        vkDestroyImageView(device, colourImageView, nullptr);
+        vkDestroyImage(device, colourImage, nullptr);
+        vkFreeMemory(device, colourImageMemory, nullptr);
+
         cleanupSwapChain();
 
         for (size_t i = 0; i < MAX_CONCURRENT_FRAMES; i++)
@@ -149,6 +156,23 @@ namespace Renderer
         }
     }
 
+    VkSampleCountFlagBits VulkanRenderer::getMaxUsableSampleCount()
+    {
+        VkPhysicalDeviceProperties physicalDeviceProperties;
+
+        vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+
+        VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts;
+
+        if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
+        if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; }
+        if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; }
+        if (counts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; }
+        if (counts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; }
+        if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; }
+
+        return VK_SAMPLE_COUNT_1_BIT;
+    }
 
     void VulkanRenderer::pickPhysicalDevice()
     {
@@ -175,6 +199,8 @@ namespace Renderer
             if (isSuitableDevice(physicalDevice))
             {
                 this->physicalDevice = physicalDevice;
+                msaaSamples = getMaxUsableSampleCount();
+                std::cout << "Device supports " << msaaSamples << " msaa samples\n";
                 break;
             }
         }
@@ -462,6 +488,7 @@ namespace Renderer
 
         createSwapChain();
         createImageViews();
+        createColorResources();
         createFramebuffers();
     }
 
@@ -626,7 +653,7 @@ namespace Renderer
     {
         VkAttachmentDescription colourAttachment{};
         colourAttachment.format = swapChainImageFormat;
-        colourAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        colourAttachment.samples = msaaSamples;
         // do before rendering; clear
         colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         // do after rendering, store
@@ -637,20 +664,39 @@ namespace Renderer
         // we clear image so don't need to worry about intial layout
         colourAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         // image is auto converted to presentation layout
-        colourAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-        // one subpass
+        // since msaa is enabled optimal is needed as they
+        // cannot be presented as is
+        colourAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         // e.g. layout(location = 0) out vec4 outColour
         VkAttachmentReference colourAttachmentRef{};
         colourAttachmentRef.attachment = 0;
         colourAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+        // resolve attachment for msaa
+        VkAttachmentDescription colourAttachmentResolve{};
+        colourAttachmentResolve.format = swapChainImageFormat;
+        colourAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
+        colourAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colourAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        colourAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colourAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colourAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        colourAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+        // resolve ref
+        VkAttachmentReference colourResolveAttachmentRef{};
+        colourResolveAttachmentRef.attachment = 1;
+        colourResolveAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+        // one subpass
+
         VkSubpassDescription subpass{};
         // specify as a graphics subpass
         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass.colorAttachmentCount = 1;
         subpass.pColorAttachments = &colourAttachmentRef;
+        subpass.pResolveAttachments = &colourResolveAttachmentRef;
 
         VkSubpassDependency dependency{};
         dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -661,10 +707,12 @@ namespace Renderer
         dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
+        std::array<VkAttachmentDescription, 2>  attachments = {colourAttachment, colourAttachmentResolve};
+
         VkRenderPassCreateInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.attachmentCount = 1;
-        renderPassInfo.pAttachments = &colourAttachment;
+        renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+        renderPassInfo.pAttachments = attachments.data();
         renderPassInfo.subpassCount = 1;
         renderPassInfo.pSubpasses = &subpass;
 
@@ -746,9 +794,9 @@ namespace Renderer
 
         VkPipelineMultisampleStateCreateInfo multisampling{};
         multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-        multisampling.sampleShadingEnable = VK_FALSE;
-        multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+        multisampling.sampleShadingEnable = VK_TRUE;
         multisampling.minSampleShading = 1.0f;
+        multisampling.rasterizationSamples = msaaSamples;
         multisampling.pSampleMask = nullptr;
         multisampling.alphaToCoverageEnable = VK_FALSE;
         multisampling.alphaToOneEnable = VK_FALSE;
@@ -823,13 +871,13 @@ namespace Renderer
 
         for (size_t i = 0; i < swapChainImageViews.size(); i++)
         {
-            VkImageView attchaments[] = {swapChainImageViews[i]};
+            std::array<VkImageView,2> attachments = {colourImageView, swapChainImageViews[i]};
 
             VkFramebufferCreateInfo framebufferInfo{};
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebufferInfo.renderPass = renderPass;
-            framebufferInfo.attachmentCount = 1;
-            framebufferInfo.pAttachments = attchaments;
+            framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+            framebufferInfo.pAttachments = attachments.data();
             framebufferInfo.width = swapChainExtent.width;
             framebufferInfo.height = swapChainExtent.height;
             framebufferInfo.layers = 1;
@@ -1075,33 +1123,33 @@ namespace Renderer
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-        // dynamics viewport and scissor
-        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+            // dynamics viewport and scissor
+            vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+            vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-        // bind vertex buffers
-        VkBuffer vertexBuffers[] = {vertexBuffer};
-        VkDeviceSize offsets[] = {0};
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+            // bind vertex buffers
+            VkBuffer vertexBuffers[] = {vertexBuffer};
+            VkDeviceSize offsets[] = {0};
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-        // use descriptor stes
-        vkCmdBindDescriptorSets
-        (
-            commandBuffer, 
-            VK_PIPELINE_BIND_POINT_GRAPHICS, 
-            pipelineLayout,
-            0,
-            1,
-            &descriptorSets[currentFrame],
-            0,
-            nullptr
-        );
+            // use descriptor stes
+            vkCmdBindDescriptorSets
+            (
+                commandBuffer, 
+                VK_PIPELINE_BIND_POINT_GRAPHICS, 
+                pipelineLayout,
+                0,
+                1,
+                &descriptorSets[currentFrame],
+                0,
+                nullptr
+            );
 
-        // the draw command is issues
-        // vertexCount, instanceCount, firstVertex, firstInstance
-        vkCmdDraw(commandBuffer, vertices.size(), 1, 0, 0);
+            // the draw command is issues
+            // vertexCount, instanceCount, firstVertex, firstInstance
+            vkCmdDraw(commandBuffer, vertices.size(), 1, 0, 0);
 
         // end
         vkCmdEndRenderPass(commandBuffer);
