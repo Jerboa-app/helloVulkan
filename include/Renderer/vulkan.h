@@ -17,6 +17,8 @@
 #include <limits>
 #include <algorithm>
 
+const int MAX_CONCURRENT_FRAMES = 2;
+
 const std::vector<const char *> validationLayers = 
 {
     "VK_LAYER_KHRONOS_validation"
@@ -86,10 +88,12 @@ namespace Renderer
             VkPipeline pipeline;
 
             VkCommandPool commandPool;
-            VkCommandBuffer commandBuffer;
+            std::vector<VkCommandBuffer> commandBuffers;
 
-            VkSemaphore imageAvailableSemaphore, renderFinsihedSemaphore;
-            VkFence frameFinished;
+            std::vector<VkSemaphore> imageAvailableSemaphores, renderFinsihedSemaphores;
+            std::vector<VkFence> framesFinished;
+
+            unsigned currentFrame = 0;
 
             VkSwapchainKHR swapChain;
             std::vector<VkImage> swapChainImages;
@@ -132,7 +136,7 @@ namespace Renderer
             void createFramebuffers();
 
             void createCommandPool();
-            void createCommandBuffer();
+            void createCommandBuffers();
             void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
             void createSyncObjects();
