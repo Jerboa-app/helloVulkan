@@ -45,6 +45,8 @@ file(GLOB SRC
 )
 if (WINDOWS)
     add_compile_definitions(WINDOWS)
+    
+    set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
 
     if (RELEASE)
         # launch as windows, not console app - so cmd does not open as well
