@@ -5,6 +5,8 @@
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
+// will mostly auto align buffer data
+#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -44,11 +46,29 @@ const std::vector<const char *> deviceExtensions =
     const bool enableValidationLayers = false;
 #endif
 
+/*
+    careful with alignment, e.g.
+
+        Scalars have to be aligned by N (= 4 bytes given 32 bit floats).
+        A vec2 must be aligned by 2N (= 8 bytes)
+        A vec3 or vec4 must be aligned by 4N (= 16 bytes)
+        A nested structure must be aligned by the base alignment of its members rounded up to a multiple of 16.
+        A mat4 matrix must have the same alignment as a vec4.
+
+    struct UniformBufferObject 
+    {
+        glm::vec2 foo;
+        alignas(16) glm::mat4 model;
+        glm::mat4 view;
+        glm::mat4 proj;
+    };
+
+*/
 struct UniformBufferObject
 {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
+    alignas(16) glm::mat4 model;
+    alignas(16) glm::mat4 view;
+    alignas(16) glm::mat4 proj;
 };
 
 struct Vertex 
@@ -146,7 +166,7 @@ namespace Renderer
             VkRect2D scissor;
 
             VkRenderPass renderPass;
-            
+
             VkDescriptorSetLayout descriptorSetLayout;
             VkDescriptorPool descriptorPool;
             std::vector<VkDescriptorSet> descriptorSets;
