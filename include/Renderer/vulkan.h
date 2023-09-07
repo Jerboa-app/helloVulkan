@@ -3,7 +3,13 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <chrono>
+
 
 #include <Renderer/renderer.h>
 #include <Shader/shader.h>
@@ -37,6 +43,13 @@ const std::vector<const char *> deviceExtensions =
 #else
     const bool enableValidationLayers = false;
 #endif
+
+struct UniformBufferObject
+{
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
 
 struct Vertex 
 {
@@ -133,11 +146,20 @@ namespace Renderer
             VkRect2D scissor;
 
             VkRenderPass renderPass;
+            
+            VkDescriptorSetLayout descriptorSetLayout;
+            VkDescriptorPool descriptorPool;
+            std::vector<VkDescriptorSet> descriptorSets;
+
             VkPipelineLayout pipelineLayout;
             VkPipeline pipeline;
 
             VkBuffer vertexBuffer;
             VkDeviceMemory vertexBufferMemory;
+
+            std::vector<VkBuffer> uniformBuffers;
+            std::vector<VkDeviceMemory> uniformBuffersMemory;
+            std::vector<void*> uniformBuffersMapped;
 
             VkCommandPool commandPool;
             std::vector<VkCommandBuffer> commandBuffers;
@@ -192,6 +214,15 @@ namespace Renderer
             void createFramebuffers();
 
             void createVertexBuffer();
+
+            void createUniformBuffers();
+
+            void updateUniformBuffer();
+
+            void createDescriptorSetLayout();
+
+            void createDescriptorPool();
+            void createDescriptorSets();
 
             void createCommandPool();
             void createCommandBuffers();
