@@ -267,6 +267,15 @@ namespace Renderer
 
             uint32_t findMemoryType(uint32_t typeFiller, VkMemoryPropertyFlags properties);
 
+            void createBuffer
+            (
+                VkDeviceSize size, 
+                VkBufferUsageFlags usage, 
+                VkMemoryPropertyFlags properties,
+                VkBuffer & buffer, VkDeviceMemory & bufferMemory
+            );
+
+            void copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size);
     };
 
 }
