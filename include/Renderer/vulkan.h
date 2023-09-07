@@ -69,6 +69,8 @@ namespace Renderer
 
             void finish(){ vkDeviceWaitIdle(device); }
 
+            void setExtent(uint32_t w, uint32_t h) { width = w; height = h; recreateSwapChain(); }
+
         private:
 
             VkInstance instance;
@@ -100,6 +102,8 @@ namespace Renderer
             VkFormat swapChainImageFormat;
             VkExtent2D swapChainExtent;
 
+            uint32_t width, height;
+
             std::vector<VkImageView> swapChainImageViews;
             std::vector<VkFramebuffer> swapChainFramebuffers;
 
@@ -122,11 +126,13 @@ namespace Renderer
             bool checkDeviceExtensionSupport(VkPhysicalDevice physicalDevice);
             void getRequiredExtensions();
 
-            void createSwapChain(GLFWwindow * window);
+            void createSwapChain();
+            void recreateSwapChain();
+            void cleanupSwapChain();
             SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice physicalDevice);
             VkSurfaceFormatKHR chooseSwapChainSurfaceFormat(const std::vector<VkSurfaceFormatKHR> & availableFormats);
             VkPresentModeKHR chooseSwapChainPresentMode(const std::vector<VkPresentModeKHR> & availablePresentModes);
-            VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR & capabilities, GLFWwindow * window);
+            VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR & capabilities);
             void createImageViews();
 
             void createRenderPass();

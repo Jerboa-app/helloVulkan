@@ -11,6 +11,7 @@
 class HelloTriangleApplication 
 {
 public:
+
     void run() 
     {
         initWindow();
@@ -18,6 +19,8 @@ public:
         mainLoop();
         cleanup();
     }
+
+    void resize(uint32_t w, uint32_t h) { renderer->setExtent(w, h); }
 
 private:
 
@@ -32,9 +35,11 @@ private:
         glfwInit();
         // no opengl
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
         window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+        glfwSetWindowUserPointer(window, this);
+        glfwSetFramebufferSizeCallback(window, frameBufferResizedCallback);
     }
 
     void initVulkan() 
@@ -57,6 +62,17 @@ private:
     {
         glfwDestroyWindow(window);
         glfwTerminate();
+    }
+
+    static void frameBufferResizedCallback(GLFWwindow * window, int width, int height)
+    {
+        auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
+        int w, h;
+        glfwGetFramebufferSize(window, &w, &h);
+        width = static_cast<uint32_t>(w);
+        height = static_cast<uint32_t>(h);
+        app->resize(width, height);
+
     }
 
 

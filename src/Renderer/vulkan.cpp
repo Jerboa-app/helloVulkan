@@ -5,6 +5,13 @@ namespace Renderer
 
     VulkanRenderer::VulkanRenderer(GLFWwindow * window)
     {
+
+        // must be careful, GLFW uses screen units not pixels, we need pixels
+        int w, h;
+        glfwGetFramebufferSize(window, &w, &h);
+        width = static_cast<uint32_t>(w);
+        height = static_cast<uint32_t>(h);
+
         viewport = VkViewport{};
         scissor = VkRect2D{};
         // optional application information
@@ -60,7 +67,7 @@ namespace Renderer
 
         createLogicalDevice();
 
-        createSwapChain(window);
+        createSwapChain();
 
         createImageViews();
 
@@ -79,6 +86,13 @@ namespace Renderer
 
     VulkanRenderer::~VulkanRenderer()
     {
+        cleanupSwapChain();
+
+        vkDestroyPipeline(device, pipeline, nullptr);
+
+        vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+
+        vkDestroyRenderPass(device, renderPass, nullptr);
 
         for (unsigned i = 0; i < MAX_CONCURRENT_FRAMES; i++)
         {
@@ -90,30 +104,12 @@ namespace Renderer
         // command buffers are also freed here
         vkDestroyCommandPool(device, commandPool, nullptr);
 
+        vkDestroyDevice(device, nullptr);
+
         if (enableValidationLayers)
         {
             destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
         }
-
-        vkDestroyPipeline(device, pipeline, nullptr);
-
-        vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-
-        for (auto framebuffer : swapChainFramebuffers)
-        {
-            vkDestroyFramebuffer(device, framebuffer, nullptr);
-        }
-        
-        vkDestroyRenderPass(device, renderPass, nullptr);
-
-        for (auto imageView : swapChainImageViews)
-        {
-            vkDestroyImageView(device, imageView, nullptr);
-        }
-
-        vkDestroySwapchainKHR(device, swapChain, nullptr);
-
-        vkDestroyDevice(device, nullptr);
 
         vkDestroySurfaceKHR(instance, surface, nullptr);
 
@@ -365,12 +361,12 @@ namespace Renderer
     }
 
 
-    void VulkanRenderer::createSwapChain(GLFWwindow * window)
+    void VulkanRenderer::createSwapChain()
     {
         SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
         VkSurfaceFormatKHR surfaceFormat = chooseSwapChainSurfaceFormat(swapChainSupport.formats);
         VkPresentModeKHR presentMode = chooseSwapChainPresentMode(swapChainSupport.presentModes);
-        VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities, window);
+        VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
         uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
         if 
@@ -432,6 +428,32 @@ namespace Renderer
     
         swapChainImageFormat = surfaceFormat.format;
         swapChainExtent = extent;
+    }
+
+    void VulkanRenderer::recreateSwapChain()
+    {
+        vkDeviceWaitIdle(device);
+
+        cleanupSwapChain();
+
+        createSwapChain();
+        createImageViews();
+        createFramebuffers();
+    }
+
+    void VulkanRenderer::cleanupSwapChain()
+    {
+        for (auto framebuffer : swapChainFramebuffers)
+        {
+            vkDestroyFramebuffer(device, framebuffer, nullptr);
+        }
+
+        for (auto imageView : swapChainImageViews)
+        {
+            vkDestroyImageView(device, imageView, nullptr);
+        }
+
+        vkDestroySwapchainKHR(device, swapChain, nullptr);
     }
 
     SwapChainSupportDetails VulkanRenderer::querySwapChainSupport(VkPhysicalDevice physicalDevice)
@@ -525,7 +547,7 @@ namespace Renderer
 
     }
 
-    VkExtent2D VulkanRenderer::chooseSwapExtent(const VkSurfaceCapabilitiesKHR & capabilities, GLFWwindow * window)
+    VkExtent2D VulkanRenderer::chooseSwapExtent(const VkSurfaceCapabilitiesKHR & capabilities)
     {
         if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
         {
@@ -534,14 +556,9 @@ namespace Renderer
         }
         else 
         {
-            // must be careful, GLFW uses screen units not pixels, we need pixels
-            int width, height;
-            glfwGetFramebufferSize(window, &width, &height);
-
             VkExtent2D actualExtent = 
             {
-                static_cast<uint32_t>(width),
-                static_cast<uint32_t>(height)
+                width, height
             };
 
             actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
@@ -941,12 +958,23 @@ namespace Renderer
         // VK_TRUE = wait for all fences
         // last is a timeout integer
         vkWaitForFences(device, 1, &framesFinished[currentFrame], VK_TRUE, UINT64_MAX);
-        vkResetFences(device, 1, &framesFinished[currentFrame]);
 
         // aquire an image
         uint32_t imageIndex; 
-        vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+        VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
         
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            recreateSwapChain();
+            return;
+        }
+        else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+        {
+            throw std::runtime_error("Failed to aquire swap chain image");
+        }
+
+        vkResetFences(device, 1, &framesFinished[currentFrame]);
+
         vkResetCommandBuffer(commandBuffers[currentFrame], 0);
         recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
         // submit the command buffer 
@@ -983,7 +1011,17 @@ namespace Renderer
         presentInfo.pImageIndices = &imageIndex;
         // can check on success
         presentInfo.pResults = nullptr;
-        vkQueuePresentKHR(presentQueue, &presentInfo);
+
+        result = vkQueuePresentKHR(presentQueue, &presentInfo);
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+        {
+            recreateSwapChain();
+        }
+        else if (result != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to present swap chain image");
+        }
 
         currentFrame = (currentFrame+1)%MAX_CONCURRENT_FRAMES;
     }
