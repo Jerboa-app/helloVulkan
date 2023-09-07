@@ -100,8 +100,7 @@ then
   done 
   echo -e "###############\n"
 
-  dll=("libgcc_s_seh-1.dll"
-    "libstdc++-6.dll"
+  dll=(
     "libwinpthread-1.dll"
   )
 
