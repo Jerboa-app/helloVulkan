@@ -33,7 +33,7 @@ namespace Renderer
     {
         VkShaderModuleCreateInfo createInfo {};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        createInfo.codeSize = vertexSource.size();
+        createInfo.codeSize = vertexSource.size()*4;
         createInfo.pCode = reinterpret_cast<const uint32_t*>(vertexSource.data());
 
         if (vkCreateShaderModule(device, &createInfo, nullptr, &vertexModule) != VK_SUCCESS)
@@ -41,7 +41,7 @@ namespace Renderer
             throw std::runtime_error("Failed to create vertex shader module");
         }
 
-        createInfo.codeSize = fragmentSource.size();
+        createInfo.codeSize = fragmentSource.size()*4;
         createInfo.pCode = reinterpret_cast<const uint32_t*>(fragmentSource.data());
 
         if (vkCreateShaderModule(device, &createInfo, nullptr, &fragmentModule) != VK_SUCCESS)
@@ -75,5 +75,94 @@ namespace Renderer
         };
 
         return shaderStages;
+    }
+
+    std::string Shader::preprocessShader
+    (
+        const std::string& source_name,
+        shaderc_shader_kind kind,
+        const std::string& source,
+        shaderc::CompileOptions options
+    ) 
+    {
+        shaderc::Compiler compiler;
+
+        shaderc::PreprocessedSourceCompilationResult result = compiler.PreprocessGlsl
+        (
+            source, 
+            kind, 
+            source_name.c_str(), 
+            options
+        );
+
+        if (result.GetCompilationStatus() != shaderc_compilation_status_success) 
+        {
+            std::cerr << result.GetErrorMessage();
+            return "";
+        }
+
+        return {result.cbegin(), result.cend()};
+    }
+
+    std::string Shader::compileToAssembly
+    (
+        const std::string& source_name,
+        shaderc_shader_kind kind,
+        const std::string& source,
+        shaderc::CompileOptions options,
+        bool optimize
+    ) 
+    {
+        shaderc::Compiler compiler;
+
+        if (optimize) options.SetOptimizationLevel(shaderc_optimization_level_size);
+
+        shaderc::AssemblyCompilationResult result = compiler.CompileGlslToSpvAssembly
+        (
+            source, 
+            kind, 
+            source_name.c_str(), 
+            options
+        );
+
+        if (result.GetCompilationStatus() != shaderc_compilation_status_success) 
+        {
+            std::cerr << result.GetErrorMessage();
+            return "";
+        }
+
+        return {result.cbegin(), result.cend()};
+    }
+
+    std::vector<uint32_t> Shader::compileSPIRV
+    (
+        const std::string& source_name,
+        shaderc_shader_kind kind,
+        const std::string& source,
+        shaderc::CompileOptions options,
+        bool optimize
+    ) 
+    {
+
+        shaderc::Compiler compiler;
+    
+        if (optimize) options.SetOptimizationLevel(shaderc_optimization_level_size);
+
+        shaderc::SpvCompilationResult module = compiler.CompileGlslToSpv
+        (
+            source, 
+            kind, 
+            source_name.c_str(), 
+            options
+        );
+
+        if (module.GetCompilationStatus() != shaderc_compilation_status_success) 
+        {
+            std::cerr << module.GetErrorMessage();
+            return std::vector<uint32_t>();
+        }
+
+        return {module.cbegin(), module.cend()};
+
     }
 }
