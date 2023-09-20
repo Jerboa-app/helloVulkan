@@ -35,6 +35,7 @@ add_subdirectory(include/vendored/glfw)
 include_directories(include/vendored/glfw/include)
 
 include_directories(include include/vendored)
+include_directories(include include/vendored/VulkanSDK/Include)
 
 include_directories(src)
 
@@ -52,9 +53,12 @@ if (WINDOWS)
         # launch as windows, not console app - so cmd does not open as well
         add_link_options(-mwindows)
     endif ()
+
+    link_directories(include/vendored/VulkanSDK/Windows/Lib)
 else()
     # so nautilus etc recognise target as executable rather than .so
     add_link_options(-no-pie)
+    link_directories(include/vendored/VulkanSDK/Linux/Lib)
 endif()
 
 if (VALIDATION)
@@ -63,4 +67,4 @@ endif()
 
 add_executable(HelloVK ${SRC})
 
-target_link_libraries(HelloVK glm ${Vulkan_LIBRARIES} glfw)
+target_link_libraries(HelloVK glm ${Vulkan_LIBRARIES} glfw shaderc_combined)
