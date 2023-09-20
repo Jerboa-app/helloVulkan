@@ -33,11 +33,7 @@ namespace Renderer
         Shader(const VkDevice & d, std::string programName)
         : device(d)
         {
-            auto v = readSPIRV(programName+"-vert.spv");
-            auto f = readSPIRV(programName+"-frag.spv");
             
-            std::cout << "Precompiled sizes: " << v.size() << ", " << f.size() << "\n";
-
             shaderc::CompileOptions options;
 
             auto preprocessedVert = preprocessShader
