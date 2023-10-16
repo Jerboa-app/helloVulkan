@@ -1129,6 +1129,11 @@ namespace Renderer
 
             // dynamics viewport and scissor
             vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	    VkExtent2D ext;
+	    ext.width = swapChainExtent.width/2.0;
+	    ext.height = swapChainExtent.height;
+	    scissor.offset = {0, 0};
+	    scissor.extent = ext;
             vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
             // bind vertex buffers
@@ -1152,7 +1157,13 @@ namespace Renderer
             // the draw command is issues
             // vertexCount, instanceCount, firstVertex, firstInstance
             vkCmdDraw(commandBuffer, vertices.size(), 1, 0, 0);
-
+            
+	    ext.width = swapChainExtent.width/2;
+            ext.height = swapChainExtent.height;
+            scissor.extent = ext;
+	    scissor.offset = {swapChainExtent.width/2, 0};
+            vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+	    vkCmdDraw(commandBuffer, vertices.size(), 1, 0, 0);
         // end
         vkCmdEndRenderPass(commandBuffer);
         if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
